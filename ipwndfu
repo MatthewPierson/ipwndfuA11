@@ -19,6 +19,7 @@ def print_help():
     print '  -x\t\t\t\tinstall alloc8 exploit to NOR'
     print '  -f file\t\t\tsend file to device in DFU Mode'
     print 'Advanced options:'
+    print '  --eclipsa\t\t\t\treset counters for eclipsa devices'
     print '  --demote\t\t\tdemote device to enable JTAG'
     print '  --boot\t\t\tboot device'
     print '  --dump=address,length\t\tdump memory to stdout'
@@ -36,7 +37,7 @@ def print_help():
 
 if __name__ == '__main__':
     try:
-        advanced = ['demote','patch','dump=', 'hexdump=', 'dump-rom', 'dump-nor=', 'flash-nor=', '24kpwn', 'remove-24kpwn', 'remove-alloc8', 'decrypt-gid=', 'encrypt-gid=', 'decrypt-uid=', 'encrypt-uid=']
+        advanced = ['demote','patch','dump=', 'hexdump=', 'dump-rom', 'dump-nor=', 'flash-nor=', '24kpwn', 'remove-24kpwn', 'remove-alloc8', 'decrypt-gid=', 'encrypt-gid=', 'decrypt-uid=', 'encrypt-uid=', 'eclipsa']
         opts, args = getopt.getopt(sys.argv[1:], 'pxf:', advanced)
     except getopt.GetoptError:
         print 'ERROR: Invalid arguments provided.'
@@ -83,7 +84,12 @@ if __name__ == '__main__':
                 print 'Found:', serial_number
                 print 'ERROR: This device is not supported.'
                 sys.exit(1)
-
+        if opt == '--eclipsa':
+            # This allows the PWND:[eclipsa] string to show up for A8/A9 devices
+            device = dfu.acquire_device()
+            dfu.reset_counters(device)
+            device = dfu.acquire_device()
+            exit(0)
         if opt == '-x':
             device = PwnedDFUDevice()
             if device.config.cpid != '8920':
