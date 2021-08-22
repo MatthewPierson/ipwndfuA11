@@ -65,7 +65,7 @@ def _next(iter):
     try:
         return next(iter)
     except NameError:
-        return iter.next()
+        return next(iter)
 
 # functools appeared in 2.5
 try:
@@ -94,5 +94,5 @@ def as_array(data=None):
         # When you pass a unicode string or a character sequence,
         # you get a TypeError if the first parameter does not match
         a = array.array('B')
-        a.fromstring(data) # deprecated since 3.2
+        a.frombytes(data.encode('utf-8'))
         return a

@@ -1,4 +1,4 @@
-import hashlib, os, platform, cStringIO, tarfile
+import hashlib, os, platform, io, tarfile
 
 class VersionConfig:
     def __init__(self, version, bottle, bottle_sha256, dylib_patches, dylib_sha256):
@@ -13,25 +13,25 @@ configs = [
         version='10.14',
         bottle='libusb-1.0.22.mojave.bottle',
         bottle_sha256='6accd1dfe6e66c30aac825ad674e9c7a48b752bcf84561e9e2d397ce188504ff',
-        dylib_patches=[(0x8fd1, 'E985000000'.decode('hex'))],
+        dylib_patches=[(0x8fd1, bytes.fromhex('E985000000'))],
         dylib_sha256='34d4c0ca821a31f83f3860575f9683cdb8fc5cbd4167383eedfb8b2ba7f7d9d5'),
     VersionConfig(
         version='10.13',
         bottle='libusb-1.0.22.high_sierra.bottle',
         bottle_sha256='7b1fd86a5129620d1bbf048c68c7742ecad450de138b8186bf8e985a752b2302',
-        dylib_patches=[(0x98fb, 'E97F000000'.decode('hex'))],
+        dylib_patches=[(0x98fb, bytes.fromhex('E97F000000'))],
         dylib_sha256='7bd48a3a9955fc20752433f944f61d58d5ec9b68d25dcfab1671f3c82339c4f8'),
     VersionConfig(
         version='10.12',
         bottle='libusb-1.0.22.sierra.bottle',
         bottle_sha256='7f2b65d09525c432a86e46699a1448bab36503f45f16d6e0d8f42be6b1ef55cf',
-        dylib_patches=[(0x98fb, 'E97F000000'.decode('hex'))],
+        dylib_patches=[(0x98fb, bytes.fromhex('E97F000000'))],
         dylib_sha256='0d386845a96fa0457cb6c200f956c9b0d5f236729ef1e2cff34cd312f8cfc7ba'),
     VersionConfig(
         version='10.11',
         bottle='libusb-1.0.22.el_capitan.bottle',
         bottle_sha256='33575c9f56bc0d57bf985a21e40be019d5c269b432939416be8f24c5921bbb28',
-        dylib_patches=[(0x9917, 'E956010000'.decode('hex'))],
+        dylib_patches=[(0x9917, bytes.fromhex('E956010000'))],
         dylib_sha256='7ae848e0e8730bf8de48bb534a8ee42eb301a2f6ba6cc188228ce8bf79a6ba07'),
     VersionConfig(
         version='10.10',
@@ -81,7 +81,7 @@ def libusb1_path_internal():
                 f.close()
                 if hashlib.sha256(dylib).hexdigest() == config.dylib_sha256:
                     return path
-                print 'WARNING: SHA256 hash of existing dylib does not match.'
+                print('WARNING: SHA256 hash of existing dylib does not match.')
             except IOError:
                 pass
 
@@ -89,15 +89,15 @@ def libusb1_path_internal():
             bottle = f.read()
             f.close()
             if hashlib.sha256(bottle).hexdigest() != config.bottle_sha256:
-                print 'ERROR: SHA256 hash of bottle does not match.'
+                print('ERROR: SHA256 hash of bottle does not match.')
                 sys.exit(1)
 
-            tar = tarfile.open(fileobj=cStringIO.StringIO(bottle))
+            tar = tarfile.open(fileobj=io.StringIO(bottle))
             for member in tar.getmembers():
                 if member.name.endswith(DYLIB_NAME):
                     patched_dylib = apply_patches(tar.extractfile(member.name).read(), config.dylib_patches)
                     if hashlib.sha256(patched_dylib).hexdigest() != config.dylib_sha256:
-                        print 'ERROR: SHA256 hash of new dylib does not match.'
+                        print('ERROR: SHA256 hash of new dylib does not match.')
                         sys.exit(1)
                     f = open(path, 'wb')
                     f.write(patched_dylib)
